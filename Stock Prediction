@@ -1,0 +1,42 @@
+import yfinance as yf
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
+
+# Load AAPL stock price data
+data = yf.download('AAPL', start='2010-01-01', end='2022-09-15')
+# Convert data to pandas dataframe
+df = pd.DataFrame(data)
+
+# Set date as index
+df.set_index('Date', inplace=True)
+
+# Scale data using Min-Max Scaler
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(df)
+# Create LSTM model
+model = Sequential()
+model.add(LSTM(units=50, return_sequences=True, input_shape=(scaled_data.shape[1], 1)))
+model.add(LSTM(units=50, return_sequences=False))
+model.add(Dense(units=1))
+
+# Compile model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train model
+model.fit(scaled_data, epochs=100, batch_size=32, validation_data=scaled_data)
+# Make predictions on test data
+predictions = model.predict(scaled_data)
+
+# Inverse transform predictions
+predictions = scaler.inverse_transform(predictions)
+
+# Plot predicted stock prices
+plt.plot(predictions)
+plt.title('AAPL Stock Price Prediction')
+plt.xlabel('Time')
+plt.ylabel('Stock Price')
+plt.show()
