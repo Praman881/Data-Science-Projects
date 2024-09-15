@@ -1,0 +1,37 @@
+import pandas as pd
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+
+# Load dataset
+data = pd.read_csv('house-prices.csv')
+
+# One-hot encode location
+data = pd.get_dummies(data, columns=['location'])
+
+# Scale features
+scaler = StandardScaler()
+data[['bedrooms', 'sqft']] = scaler.fit_transform(data[['bedrooms', 'sqft']])
+
+# Split data into training and testing sets
+X = data.drop('price', axis=1)
+y = data['price']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create and train linear regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on testing set
+y_pred = model.predict(X_test)
+
+# Evaluate model performance
+mse = mean_squared_error(y_test, y_pred)
+print(f'Mean Squared Error: {mse:.2f}')
+
+# Use model to make predictions on new data
+new_data = pd.DataFrame({'bedrooms': [3], 'sqft': [1500], 'location_urban': [1], 'location_suburban': [0], 'location_rural': [0]})
+new_data = scaler.transform(new_data)
+prediction = model.predict(new_data)
+print(f'Predicted price: {prediction[0]:.2f}')
